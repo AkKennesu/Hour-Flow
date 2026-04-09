@@ -1,32 +1,41 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/time_log.dart';
+import '../models/calendar_event.dart';
 
 class DatabaseService {
-  static const String _timeBoxName = 'timeLogs';
+  static const String logBoxName = 'timelogs';
+  static const String eventBoxName = 'calendarEvents';
+  late Box<TimeLog> _logBox;
 
   Future<void> init() async {
     await Hive.initFlutter();
     if (!Hive.isAdapterRegistered(0)) {
       Hive.registerAdapter(TimeLogAdapter());
     }
-    await Hive.openBox<TimeLog>(_timeBoxName);
+    if (!Hive.isAdapterRegistered(1)) {
+      Hive.registerAdapter(CalendarEventAdapter());
+    }
+
+    _logBox = await Hive.openBox<TimeLog>(logBoxName);
+    await Hive.openBox<CalendarEvent>(eventBoxName);
   }
 
-  Box<TimeLog> get _box => Hive.box<TimeLog>(_timeBoxName);
+  Box<TimeLog> get logBox => _logBox;
+  Box<CalendarEvent> get eventBox => Hive.box<CalendarEvent>(eventBoxName);
 
   Future<void> saveLog(TimeLog log) async {
-    await _box.put(log.id, log);
+    await _logBox.put(log.id, log);
   }
 
   Future<void> deleteLog(String id) async {
-    await _box.delete(id);
+    await _logBox.delete(id);
   }
 
   List<TimeLog> getAllLogs() {
-    return _box.values.toList();
+    return _logBox.values.toList();
   }
 
   TimeLog? getLog(String id) {
-    return _box.get(id);
+    return _logBox.get(id);
   }
 }

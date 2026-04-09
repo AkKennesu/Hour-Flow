@@ -5,7 +5,11 @@ import 'package:lottie/lottie.dart';
 import 'package:intl/intl.dart';
 
 import '../../logic/viewmodels/time_log_viewmodel.dart';
+import '../../logic/viewmodels/settings_viewmodel.dart';
+import '../../logic/viewmodels/calendar_event_viewmodel.dart';
 import '../../data/models/time_log.dart';
+import '../../utils/app_localizations.dart';
+import '../../services/notification_service.dart';
 import '../widgets/horizontal_date_picker.dart';
 import '../widgets/glass_card.dart';
 
@@ -59,11 +63,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _loadLogForDate(_selectedDate);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final events = context.read<CalendarEventViewModel>().events;
+      if (events.isNotEmpty) {
+        NotificationService().checkAndShowInAppNotifications(context, events);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final settingsVm = Provider.of<SettingsViewModel>(context);
     
     return Scaffold(
       body: SafeArea(
@@ -84,7 +96,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   Text(
-                    DateFormat('MMMM yyyy').format(_selectedDate),
+                    DateFormat('MMMM yyyy', settingsVm.localeCode).format(_selectedDate),
                     style: theme.textTheme.bodyMedium,
                   ),
                 ],
@@ -137,23 +149,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Time Logs',
+          context.tr('today_log'),
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _TimeInputCard(title: 'AM IN', time: _amIn, onTap: () => _pickTime(context, 'amIn'))),
+            Expanded(child: _TimeInputCard(title: context.tr('am_in'), time: _amIn, onTap: () => _pickTime(context, 'amIn'))),
             const SizedBox(width: 12),
-            Expanded(child: _TimeInputCard(title: 'AM OUT', time: _amOut, onTap: () => _pickTime(context, 'amOut'))),
+            Expanded(child: _TimeInputCard(title: context.tr('am_out'), time: _amOut, onTap: () => _pickTime(context, 'amOut'))),
           ],
         ),
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _TimeInputCard(title: 'PM IN', time: _pmIn, onTap: () => _pickTime(context, 'pmIn'))),
+            Expanded(child: _TimeInputCard(title: context.tr('pm_in'), time: _pmIn, onTap: () => _pickTime(context, 'pmIn'))),
             const SizedBox(width: 12),
-            Expanded(child: _TimeInputCard(title: 'PM OUT', time: _pmOut, onTap: () => _pickTime(context, 'pmOut'))),
+            Expanded(child: _TimeInputCard(title: context.tr('pm_out'), time: _pmOut, onTap: () => _pickTime(context, 'pmOut'))),
           ],
         ),
       ],
@@ -166,7 +178,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Daily Tasks',
+          context.tr('tasks'),
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 12),
@@ -175,9 +187,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             controller: _taskController,
             maxLines: 4,
             maxLength: 500,
-            decoration: const InputDecoration(
-              hintText: 'What did you work on today?',
-              contentPadding: EdgeInsets.all(16),
+            decoration: InputDecoration(
+              hintText: context.tr('what_did_you_do'),
+              contentPadding: const EdgeInsets.all(16),
             ),
             style: theme.textTheme.bodyLarge,
           ),
@@ -201,9 +213,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 height: 24,
                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
               )
-            : const Text(
-                'Save Log',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            : Text(
+                context.tr('save_log'),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
       ),
     );

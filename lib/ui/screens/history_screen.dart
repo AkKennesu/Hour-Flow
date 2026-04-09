@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import '../../logic/viewmodels/time_log_viewmodel.dart';
+import '../../logic/viewmodels/settings_viewmodel.dart';
 import '../../data/models/time_log.dart';
+import '../../utils/app_localizations.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -18,10 +20,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final settingsVm = Provider.of<SettingsViewModel>(context);
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Time Card Grid', style: TextStyle(fontWeight: FontWeight.bold)), 
+        title: Text(context.tr('time_card_grid'), style: const TextStyle(fontWeight: FontWeight.bold)), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -31,7 +34,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
           Center(
             child: Text(
-              DateFormat('MMM yyyy').format(_currentMonth),
+              DateFormat('MMM yyyy', settingsVm.localeCode).format(_currentMonth),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ),
@@ -72,10 +75,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             7: FixedColumnWidth(70), // Total
                           },
                           children: [
-                            _buildHeaderRow(theme),
-                            _buildSubHeaderRow(theme),
+                            _buildHeaderRow(theme, context),
+                            _buildSubHeaderRow(theme, context),
                             for (int i = 1; i <= daysInMonth; i++)
-                              _buildDayRow(DateTime(_currentMonth.year, _currentMonth.month, i), vm, theme),
+                              _buildDayRow(DateTime(_currentMonth.year, _currentMonth.month, i), vm, theme, context),
                           ],
                         ),
                       ),
@@ -93,9 +96,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'TOTAL MONTHLY ACCUMULATED TIME:',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                    Text(
+                      context.tr('monthly_total'),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
                     ),
                     Text(
                       _formatDuration(monthlyTotal),
@@ -115,39 +118,39 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  TableRow _buildHeaderRow(ThemeData theme) {
+  TableRow _buildHeaderRow(ThemeData theme, BuildContext context) {
     return TableRow(
       decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.2)),
       children: [
-        const _HeaderCell(text: 'Day', isParent: true),
-        const _HeaderCell(text: 'MORNING', isParent: true),
+        _HeaderCell(text: context.tr('day'), isParent: true),
+        _HeaderCell(text: context.tr('morning'), isParent: true),
         const _HeaderCell(text: '', isParent: false),
-        const _HeaderCell(text: 'AFTERNOON', isParent: true),
+        _HeaderCell(text: context.tr('afternoon'), isParent: true),
         const _HeaderCell(text: '', isParent: false),
-        const _HeaderCell(text: 'OVERTIME', isParent: true),
+        _HeaderCell(text: context.tr('overtime'), isParent: true),
         const _HeaderCell(text: '', isParent: false),
-        const _HeaderCell(text: 'Daily', isParent: true),
+        _HeaderCell(text: context.tr('daily'), isParent: true),
       ],
     );
   }
 
-  TableRow _buildSubHeaderRow(ThemeData theme) {
+  TableRow _buildSubHeaderRow(ThemeData theme, BuildContext context) {
     return TableRow(
       decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.1)),
-      children: const [
-        _HeaderCell(text: '', isParent: false),
-        _HeaderCell(text: 'IN', isParent: false),
-        _HeaderCell(text: 'OUT', isParent: false),
-        _HeaderCell(text: 'IN', isParent: false),
-        _HeaderCell(text: 'OUT', isParent: false),
-        _HeaderCell(text: 'IN', isParent: false),
-        _HeaderCell(text: 'OUT', isParent: false),
-        _HeaderCell(text: 'Total', isParent: false),
+      children: [
+        const _HeaderCell(text: '', isParent: false),
+        _HeaderCell(text: context.tr('am_in').split(' ').last, isParent: false),
+        _HeaderCell(text: context.tr('am_out').split(' ').last, isParent: false),
+        _HeaderCell(text: context.tr('pm_in').split(' ').last, isParent: false),
+        _HeaderCell(text: context.tr('pm_out').split(' ').last, isParent: false),
+        _HeaderCell(text: context.tr('ot_in').split(' ').last, isParent: false),
+        _HeaderCell(text: context.tr('ot_out').split(' ').last, isParent: false),
+        _HeaderCell(text: context.tr('total'), isParent: false),
       ],
     );
   }
 
-  TableRow _buildDayRow(DateTime date, TimeLogViewModel vm, ThemeData theme) {
+  TableRow _buildDayRow(DateTime date, TimeLogViewModel vm, ThemeData theme, BuildContext context) {
     // Check if log exists
     final log = vm.logs.cast<TimeLog?>().firstWhere(
       (l) => l != null && DateUtils.isSameDay(l.date, date), 
@@ -185,13 +188,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Log'),
-        content: Text('Are you sure you want to delete all logs for ${DateFormat('MMM d, yyyy').format(log.date)}?'),
+        title: Text(context.tr('delete_log')),
+        content: Text('${context.tr('delete_confirm')}${DateFormat('MMM d, yyyy', Provider.of<SettingsViewModel>(context, listen: false).localeCode).format(log.date)}?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.tr('cancel'))),
           TextButton(
             onPressed: () => Navigator.pop(context, true), 
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(context.tr('delete'), style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -295,13 +298,13 @@ class _TimeCell extends StatelessWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Log'),
-        content: Text('Are you sure you want to delete all logs for ${DateFormat('MMM d, yyyy').format(log.date)}?'),
+        title: Text(context.tr('delete_log')),
+        content: Text('${context.tr('delete_confirm')}${DateFormat('MMM d, yyyy', Provider.of<SettingsViewModel>(context, listen: false).localeCode).format(log.date)}?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.tr('cancel'))),
           TextButton(
             onPressed: () => Navigator.pop(context, true), 
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(context.tr('delete'), style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
