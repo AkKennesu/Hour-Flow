@@ -1,4 +1,4 @@
-package com.example.hour_flow
+package com.hourflow
 
 import io.flutter.embedding.android.FlutterActivity
 

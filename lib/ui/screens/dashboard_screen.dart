@@ -2,16 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
-import 'package:intl/intl.dart';
 
 import '../../logic/viewmodels/time_log_viewmodel.dart';
 import '../../logic/viewmodels/settings_viewmodel.dart';
-import '../../logic/viewmodels/calendar_event_viewmodel.dart';
 import '../../data/models/time_log.dart';
 import '../../utils/app_localizations.dart';
-import '../../services/notification_service.dart';
 import '../widgets/horizontal_date_picker.dart';
-import '../widgets/glass_card.dart';
+import 'camera_scan_screen.dart';
+import '../../utils/time_card_parser.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -35,7 +33,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.dispose();
   }
 
-  // Load existing log for the selected date if present
   void _loadLogForDate(DateTime date) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final vm = context.read<TimeLogViewModel>();
@@ -63,13 +60,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _loadLogForDate(_selectedDate);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final events = context.read<CalendarEventViewModel>().events;
-      if (events.isNotEmpty) {
-        NotificationService().checkAndShowInAppNotifications(context, events);
-      }
-    });
   }
 
   @override
@@ -78,63 +68,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final settingsVm = Provider.of<SettingsViewModel>(context);
     
     return Scaffold(
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              floating: true,
-              title: Column(
+      appBar: AppBar(
+        title: Column(
+          children: [
+            Text('WorkFlow', style: theme.appBarTheme.titleTextStyle),
+            Text(
+              DateFormat('MMMM yyyy', settingsVm.localeCode).format(_selectedDate),
+              style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.secondary),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.document_scanner_rounded),
+            onPressed: () => _navigateToScanner(context),
+            tooltip: 'Scan Time Card',
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            HorizontalDatePicker(
+              selectedDate: _selectedDate,
+              onDateSelected: (date) {
+                setState(() {
+                  _selectedDate = date;
+                  _loadLogForDate(date);
+                });
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'HourFlow',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    DateFormat('MMMM yyyy', settingsVm.localeCode).format(_selectedDate),
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.sync),
-                  onPressed: () {
-                    // Trigger sync logic
-                  },
-                ),
-              ],
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: HorizontalDatePicker(
-                  selectedDate: _selectedDate,
-                  onDateSelected: (date) {
-                    setState(() {
-                      _selectedDate = date;
-                      _loadLogForDate(date);
-                    });
-                  },
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.all(16),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
                   _buildTimeLogForm(context),
                   const SizedBox(height: 24),
                   _buildDailyTaskLog(context),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
                   _buildSubmitButton(context),
-                  const SizedBox(height: 80), // bottom padding
-                ]),
+                  const SizedBox(height: 40),
+                ],
               ),
             ),
           ],
@@ -148,11 +124,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          context.tr('today_log'),
-          style: theme.textTheme.titleMedium,
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Text(
+            context.tr('today_log'),
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
         ),
-        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(child: _TimeInputCard(title: context.tr('am_in'), time: _amIn, onTap: () => _pickTime(context, 'amIn'))),
@@ -177,21 +155,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          context.tr('tasks'),
-          style: theme.textTheme.titleMedium,
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Text(
+            context.tr('tasks'),
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
         ),
-        const SizedBox(height: 12),
-        GlassCard(
-          child: TextField(
-            controller: _taskController,
-            maxLines: 4,
-            maxLength: 500,
-            decoration: InputDecoration(
-              hintText: context.tr('what_did_you_do'),
-              contentPadding: const EdgeInsets.all(16),
-            ),
-            style: theme.textTheme.bodyLarge,
+        TextField(
+          controller: _taskController,
+          maxLines: 4,
+          maxLength: 500,
+          decoration: InputDecoration(
+            hintText: context.tr('what_did_you_do'),
+            alignLabelWithHint: true,
+            contentPadding: const EdgeInsets.all(16),
           ),
         ),
       ],
@@ -199,26 +177,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildSubmitButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: FilledButton(
-        style: FilledButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-        onPressed: _isSaving ? null : _saveLog,
-        child: _isSaving 
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-              )
-            : Text(
-                context.tr('save_log'),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-      ),
+    return FilledButton.icon(
+      onPressed: _isSaving ? null : _saveLog,
+      icon: _isSaving 
+          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+          : const Icon(Icons.save_rounded, size: 20),
+      label: Text(context.tr('save_log')),
     );
+  }
+
+  Future<void> _navigateToScanner(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CameraScanScreen()),
+    );
+
+    if (result != null && result is List<ScannedTimeLog> && result.isNotEmpty) {
+      final logs = result;
+      final timeLogVm = context.read<TimeLogViewModel>();
+      
+      final today = DateTime.now();
+      ScannedTimeLog? todayScanned = logs.cast<ScannedTimeLog?>().firstWhere(
+        (l) => l?.date != null && DateUtils.isSameDay(l!.date!, today),
+        orElse: () => null,
+      );
+
+      todayScanned ??= logs.last; 
+
+      setState(() {
+        if (todayScanned?.amIn != null) _amIn = todayScanned!.amIn;
+        if (todayScanned?.amOut != null) _amOut = todayScanned!.amOut;
+        if (todayScanned?.pmIn != null) _pmIn = todayScanned!.pmIn;
+        if (todayScanned?.pmOut != null) _pmOut = todayScanned!.pmOut;
+      });
+
+      int savedCount = 0;
+      for (var sLog in logs) {
+        if (sLog.date != null) {
+          final timeLog = TimeLog(
+            id: DateFormat('yyyy-MM-dd').format(sLog.date!),
+            date: sLog.date!,
+            amIn: _combine(sLog.date!, sLog.amIn),
+            amOut: _combine(sLog.date!, sLog.amOut),
+            pmIn: _combine(sLog.date!, sLog.pmIn),
+            pmOut: _combine(sLog.date!, sLog.pmOut),
+            otIn: _combine(sLog.date!, sLog.otIn),
+            otOut: _combine(sLog.date!, sLog.otOut),
+            isSynchronized: false,
+          );
+          await timeLogVm.saveLog(timeLog);
+          savedCount++;
+        }
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(savedCount > 0 
+              ? 'Saved $savedCount days from scan' 
+              : 'Today\'s times updated from scan'),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _pickTime(BuildContext context, String field) async {
@@ -255,26 +276,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
       isSynchronized: false,
     );
 
-    // Simulate processing delay for loading state visibility
-    await Future.delayed(const Duration(milliseconds: 600));
+    try {
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (!mounted) return;
 
-    // Ensure state context hasn't unmounted before completing async task hook
-    if (!mounted) return;
-
-    await context.read<TimeLogViewModel>().saveLog(log);
-    
-    if (mounted) {
-      setState(() => _isSaving = false);
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          return Dialog(
+      await context.read<TimeLogViewModel>().saveLog(log);
+      
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => Dialog(
             backgroundColor: Colors.transparent,
             elevation: 0,
             child: Center(
               child: Lottie.network(
-                'https://assets9.lottiefiles.com/packages/lf20_lk80fpsm.json', // Checkmark animation
+                'https://assets9.lottiefiles.com/packages/lf20_lk80fpsm.json',
                 repeat: false,
                 onLoaded: (composition) {
                   Future.delayed(composition.duration, () {
@@ -285,9 +302,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
               ),
             ),
-          );
-        },
-      );
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving log: $e'), backgroundColor: Colors.redAccent),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 }
@@ -306,27 +333,35 @@ class _TimeInputCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return GlassCard(
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: Colors.white54,
-              letterSpacing: 1.2,
-            ),
+    final isSelected = time != null;
+
+    return Card(
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+          child: Column(
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                time != null ? time!.format(context) : '--:--',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            time != null ? time!.format(context) : '--:--',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: time != null ? theme.colorScheme.primary : Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

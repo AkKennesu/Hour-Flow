@@ -9,7 +9,6 @@ import '../../logic/viewmodels/calendar_event_viewmodel.dart';
 import '../../data/models/time_log.dart';
 import '../../data/models/calendar_event.dart';
 import '../../utils/app_localizations.dart';
-import '../widgets/glass_card.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -34,23 +33,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final settingsVm = Provider.of<SettingsViewModel>(context);
     
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddEventDialog(context),
-        child: const Icon(Icons.add_alert),
+        icon: const Icon(Icons.add_alert_rounded),
+        label: Text(context.tr('new_event')),
       ),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
+              title: Text(context.tr('calendar'), style: theme.appBarTheme.titleTextStyle),
+              centerTitle: true,
               floating: true,
-              title: Text(
-                context.tr('log_history'),
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
             ),
             SliverToBoxAdapter(
               child: Padding(
@@ -76,8 +70,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       },
                       eventLoader: (day) {
                         return [
-                          ...vm.logs.where((log) => isSameDay(log.date, day)),
-                          ...eventVm.events.where((event) => isSameDay(event.date, day)),
+                          ...vm.logs.whereType<TimeLog>().where((log) => isSameDay(log.date, day)),
+                          ...eventVm.events.whereType<CalendarEvent>().where((event) => isSameDay(event.date, day)),
                         ];
                       },
                       calendarBuilders: CalendarBuilders(
@@ -92,8 +86,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                if (logCount > 0) Container(margin: const EdgeInsets.symmetric(horizontal: 1.5), width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: theme.colorScheme.secondary)),
-                                if (eventCount > 0) Container(margin: const EdgeInsets.symmetric(horizontal: 1.5), width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.purpleAccent)),
+                                if (logCount > 0) Container(margin: const EdgeInsets.symmetric(horizontal: 1.5), width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: theme.colorScheme.primary)),
+                                if (eventCount > 0) Container(margin: const EdgeInsets.symmetric(horizontal: 1.5), width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: theme.colorScheme.secondary)),
                               ],
                             ),
                           );
@@ -101,25 +95,30 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                       calendarStyle: CalendarStyle(
                         todayDecoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                          color: theme.colorScheme.primaryContainer,
                           shape: BoxShape.circle,
                         ),
+                        todayTextStyle: TextStyle(color: theme.colorScheme.onPrimaryContainer),
                         selectedDecoration: BoxDecoration(
                           color: theme.colorScheme.primary,
                           shape: BoxShape.circle,
                         ),
+                        selectedTextStyle: TextStyle(color: theme.colorScheme.onPrimary),
                         markerDecoration: BoxDecoration(
                           color: theme.colorScheme.secondary,
                           shape: BoxShape.circle,
                         ),
                       ),
-                      headerStyle: const HeaderStyle(
+                      headerStyle: HeaderStyle(
                         formatButtonVisible: false,
                         titleCentered: true,
+                        titleTextStyle: theme.textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
+                        leftChevronIcon: const Icon(Icons.chevron_left_rounded),
+                        rightChevronIcon: const Icon(Icons.chevron_right_rounded),
                       ),
                       daysOfWeekStyle: DaysOfWeekStyle(
-                        weekdayStyle: TextStyle(color: Colors.white70),
-                        weekendStyle: TextStyle(color: theme.colorScheme.secondary),
+                        weekdayStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontWeight: FontWeight.bold),
+                        weekendStyle: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
                       ),
                     );
                   },
@@ -128,8 +127,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(context.tr('log_summary'), style: theme.textTheme.titleMedium),
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+                child: Text(
+                  context.tr('log_summary'), 
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
               ),
             ),
             SliverPadding(
@@ -144,9 +146,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     if (logList.isEmpty && eventList.isEmpty) {
                       displayWidget = Padding(
                         key: const ValueKey('empty'),
-                        padding: const EdgeInsets.all(24.0),
+                        padding: const EdgeInsets.all(40.0),
                         child: Center(
-                          child: Text(context.tr('no_logs_found'), style: const TextStyle(color: Colors.white54)),
+                          child: Column(
+                            children: [
+                              Icon(Icons.event_busy_rounded, size: 48, color: theme.colorScheme.onSurfaceVariant.withOpacity(0.3)),
+                              const SizedBox(height: 16),
+                              Text(
+                                context.tr('no_logs_found'), 
+                                style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     } else {
@@ -159,7 +170,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               localeCode: settingsVm.localeCode,
                             ),
                           if (eventList.isNotEmpty) ...[
-                            if (logList.isNotEmpty) const SizedBox(height: 16),
+                            if (logList.isNotEmpty) const SizedBox(height: 12),
                             ...eventList.map((e) => _EventCard(event: e, vm: eventVm)).toList(),
                           ]
                         ],
@@ -170,25 +181,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       duration: const Duration(milliseconds: 300),
                       switchInCurve: Curves.easeOutCubic,
                       switchOutCurve: Curves.easeInCubic,
-                      transitionBuilder: (Widget child, Animation<double> animation) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0.0, 0.1),
-                              end: Offset.zero,
-                            ).animate(animation),
-                            child: child,
-                          ),
-                        );
-                      },
                       child: displayWidget,
                     );
                   },
                 ),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 80)),
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
         ),
       ),
@@ -208,19 +207,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(context.tr('new_event'), style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(context.tr('new_event')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: titleCtrl,
-                decoration: InputDecoration(labelText: context.tr('event_title')),
+                decoration: InputDecoration(
+                  labelText: context.tr('event_title'),
+                  hintText: 'e.g., Client Meeting',
+                ),
                 autofocus: true,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               TextField(
                 controller: descCtrl,
-                decoration: InputDecoration(labelText: context.tr('event_desc')),
+                decoration: InputDecoration(
+                  labelText: context.tr('event_desc'),
+                  hintText: 'Add details here...',
+                ),
                 maxLines: 3,
               ),
             ],
@@ -256,30 +261,49 @@ class _EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.alarm, color: Colors.purpleAccent, size: 20),
-              const SizedBox(width: 8),
-              Expanded(child: Text(event.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.redAccent, size: 18),
-                constraints: const BoxConstraints(),
-                padding: EdgeInsets.zero,
-                onPressed: () => vm.deleteEvent(event.id),
-              )
-            ],
-          ),
-          if (event.description.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(event.description, style: const TextStyle(color: Colors.white70)),
-          ]
-        ],
-      )
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.notifications_active_rounded, color: theme.colorScheme.onSecondaryContainer, size: 20),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    event.title, 
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete_outline_rounded, color: theme.colorScheme.error, size: 20),
+                  onPressed: () => vm.deleteEvent(event.id),
+                )
+              ],
+            ),
+            if (event.description.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.only(left: 44),
+                child: Text(
+                  event.description, 
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                ),
+              ),
+            ]
+          ],
+        ),
+      ),
     );
   }
 }
@@ -288,16 +312,17 @@ class _HistoricalLogCard extends StatelessWidget {
   final TimeLog log;
   final String localeCode;
 
-  const _HistoricalLogCard({super.key, required this.log, required this.localeCode});
+  const _HistoricalLogCard({required this.log, required this.localeCode});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -306,12 +331,16 @@ class _HistoricalLogCard extends StatelessWidget {
                 DateFormat('MMM d, yyyy - EEEE', localeCode).format(log.date),
                 style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
-              Icon(log.isSynchronized ? Icons.cloud_done : Icons.cloud_upload_outlined, size: 16, color: log.isSynchronized ? Colors.green : Colors.orange),
+              Icon(
+                log.isSynchronized ? Icons.cloud_done_rounded : Icons.cloud_off_rounded, 
+                size: 18, 
+                color: log.isSynchronized ? Colors.green : theme.colorScheme.outline,
+              ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildTimeItem(context.tr('am_in'), log.amIn, theme),
               _buildTimeItem(context.tr('am_out'), log.amOut, theme),
@@ -320,14 +349,21 @@ class _HistoricalLogCard extends StatelessWidget {
             ],
           ),
           if (log.tasks != null && log.tasks!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Divider(),
             const SizedBox(height: 12),
-            const Divider(color: Colors.white24),
+            Text(
+              context.tr('tasks'), 
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.primary, 
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text(context.tr('tasks'), style: theme.textTheme.labelMedium?.copyWith(color: Colors.white54)),
-            const SizedBox(height: 4),
-            Text(log.tasks!, style: theme.textTheme.bodyMedium),
+            Text(log.tasks!, style: theme.textTheme.bodyLarge),
           ]
         ],
+      ),
       ),
     );
   }
@@ -335,8 +371,11 @@ class _HistoricalLogCard extends StatelessWidget {
   Widget _buildTimeItem(String label, DateTime? time, ThemeData theme) {
     return Column(
       children: [
-        Text(label, style: theme.textTheme.labelSmall?.copyWith(color: Colors.white54)),
-        const SizedBox(height: 4),
+        Text(
+          label, 
+          style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 6),
         Text(
           time != null ? DateFormat('h:mm a').format(time) : '--:--',
           style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),

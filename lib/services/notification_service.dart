@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 import '../data/models/calendar_event.dart';
 
 class NotificationService {
@@ -6,58 +8,83 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
+  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+
   Future<void> init() async {
-    // No external packages required.
-    // In-app notifications are handled natively by Dashboard Check!
+    tz.initializeTimeZones();
+    
+    // Android Boot Receiver setup
+    const AndroidInitializationSettings androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const DarwinInitializationSettings iosInit = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+    
+    const InitializationSettings initSettings = InitializationSettings(
+      android: androidInit,
+      iOS: iosInit,
+    );
+
+    await _notificationsPlugin.initialize(settings: initSettings);
+
+    // Request exact alarm permission automatically in Android 13+
+    _notificationsPlugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
   }
 
-  void checkAndShowInAppNotifications(BuildContext context, List<CalendarEvent> allEvents) {
-    final now = DateTime.now();
-    final todayStart = DateTime(now.year, now.month, now.day);
-    final tomorrowStart = todayStart.add(const Duration(days: 1));
+  Future<void> scheduleEventNotifications(CalendarEvent event) async {
+    // 1. Notification 1 day before (Near)
+    final nearDate = event.date.subtract(const Duration(days: 1));
+    final nearDateAt9AM = DateTime(nearDate.year, nearDate.month, nearDate.day, 9, 0);
+    
+    if (nearDateAt9AM.isAfter(DateTime.now())) {
+      await _zonedSchedule(
+        id: event.id.hashCode,
+        title: 'Upcoming Event: ${event.title}',
+        body: 'Tomorrow: ${event.description}',
+        scheduledDate: nearDateAt9AM,
+      );
+    }
 
-    // Find events happening today or tomorrow.
-    final upcomingEvents = allEvents.where((event) {
-      final eventDay = DateTime(event.date.year, event.date.month, event.date.day);
-      return eventDay.isAtSameMomentAs(todayStart) || eventDay.isAtSameMomentAs(tomorrowStart);
-    }).toList();
+    // 2. Notification on the exact day (Today)
+    final todayDateAt8AM = DateTime(event.date.year, event.date.month, event.date.day, 8, 0);
+    if (todayDateAt8AM.isAfter(DateTime.now())) {
+      await _zonedSchedule(
+        id: event.id.hashCode + 1,
+        title: 'Today: ${event.title}',
+        body: event.description.isNotEmpty ? event.description : 'Don\'t forget your event today!',
+        scheduledDate: todayDateAt8AM,
+      );
+    }
+  }
 
-    if (upcomingEvents.isEmpty) return;
+  Future<void> _zonedSchedule({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime scheduledDate,
+  }) async {
+    await _notificationsPlugin.zonedSchedule(
+      id: id,
+      title: title,
+      body: body,
+      scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'calendar_events',
+          'Calendar Events',
+          channelDescription: 'Notifications for upcoming events.',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      for (var event in upcomingEvents) {
-        final eventDay = DateTime(event.date.year, event.date.month, event.date.day);
-        final isToday = eventDay.isAtSameMomentAs(todayStart);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: isToday ? Colors.redAccent.withOpacity(0.9) : Colors.purpleAccent.withOpacity(0.9),
-            duration: const Duration(seconds: 4),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            content: Row(
-              children: [
-                Icon(isToday ? Icons.warning_amber_rounded : Icons.event, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isToday ? 'TODAY: ${event.title}' : 'TOMORROW: ${event.title}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                      if (event.description.isNotEmpty)
-                        Text(event.description, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }
-    });
+  Future<void> cancelNotifications(String eventId) async {
+    await _notificationsPlugin.cancel(id: eventId.hashCode);
+    await _notificationsPlugin.cancel(id: eventId.hashCode + 1);
   }
 }

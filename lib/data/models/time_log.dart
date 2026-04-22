@@ -72,4 +72,33 @@ class TimeLog extends HiveObject {
       isSynchronized: isSynchronized ?? this.isSynchronized,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'date': date,
+      'amIn': amIn,
+      'amOut': amOut,
+      'pmIn': pmIn,
+      'pmOut': pmOut,
+      'otIn': otIn,
+      'otOut': otOut,
+      'tasks': tasks,
+    };
+  }
+
+  factory TimeLog.fromMap(String id, Map<String, dynamic> map) {
+    return TimeLog(
+      id: id,
+      date: (map['date'] as dynamic).toDate(),
+      amIn: (map['amIn'] as dynamic)?.toDate(),
+      amOut: (map['amOut'] as dynamic)?.toDate(),
+      pmIn: (map['pmIn'] as dynamic)?.toDate(),
+      pmOut: (map['pmOut'] as dynamic)?.toDate(),
+      otIn: (map['otIn'] as dynamic)?.toDate(),
+      otOut: (map['otOut'] as dynamic)?.toDate(),
+      tasks: map['tasks'],
+      isSynchronized: true,
+    );
+  }
 }

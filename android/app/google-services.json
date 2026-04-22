@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "27498611724",
+    "project_id": "workflow-de4c0",
+    "storage_bucket": "workflow-de4c0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:27498611724:android:e2a9b43a0644c99e4e1a29",
+        "android_client_info": {
+          "package_name": "com.hour_flow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "27498611724-0merspskofr47nlv1cptb32bvqbo136k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAUqB_T7GqOvoRJI1npTRqTeUWh66owOtM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "27498611724-0merspskofr47nlv1cptb32bvqbo136k.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "27498611724-c1ur72e6mrd23bta1rj5vbcnha4j949b.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.hourFlow"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:27498611724:android:cc692fe00c074a544e1a29",
+        "android_client_info": {
+          "package_name": "com.hourflow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "27498611724-0merspskofr47nlv1cptb32bvqbo136k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAUqB_T7GqOvoRJI1npTRqTeUWh66owOtM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "27498611724-0merspskofr47nlv1cptb32bvqbo136k.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "27498611724-c1ur72e6mrd23bta1rj5vbcnha4j949b.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.hourFlow"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
