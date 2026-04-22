@@ -1,8 +1,8 @@
-# ⏳ HourFlow 
+# WorkFlow 
 
-**HourFlow** is a minimalist, high-performance offline-first OJT (On-the-Job Training) Management and Time Card tracking application. Built with modern UI interactions, it replaces physical timesheets and outdated biometric tracking by offering users a seamless, interactive grid to log their shifts efficiently.
+**WorkFlow** is a minimalist, high-performance offline-first OJT (On-the-Job Training) Management and Time Card tracking application. Built with modern UI interactions, it replaces physical timesheets and outdated biometric tracking by offering users a seamless, interactive grid to log their shifts efficiently.
 
-## 🚀 Why is it Useful?
+## Why is it Useful?
 
 Tracking daily hours across Morning, Afternoon, and Overtime shifts can be tedious and prone to calculation errors. HourFlow is extremely useful because it:
 
@@ -11,7 +11,7 @@ Tracking daily hours across Morning, Afternoon, and Overtime shifts can be tedio
 - **Interactivity**: You can instantly fix or log missed time punches strictly by tapping on the Interactive Biometric `Table Grid`.
 - **Beautiful UI**: Designed with a sleek, weightless "Antigravity Theme", utilizing transparent Glassmorphism elements for extremely readable visual aesthetics.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 HourFlow was constructed using industry-leading mobile technologies utilizing a clean **MVVM Architecture**:
 
@@ -22,7 +22,7 @@ HourFlow was constructed using industry-leading mobile technologies utilizing a 
 *   **GoRouter** - Declarative framework handling persistent programmatic routing explicitly enabling flawless Bottom Navigation Bars.
 *   **Table Calendar** - Beautiful Material 3 compliant Calendar hook orchestrating monthly layout representations.
 
-## 📸 Core Features
+## Core Features
 
 1. **Biometric Time Card Grid**: A completely locked Data Table simulating physical structural timecards displaying exactly 31 trailing days seamlessly natively.
 2. **Dynamic Log Forms**: Supports multi-column log hooks parsing specific blocks like `(AM In/Out, PM In/Out, Overtime In/Out)`.
