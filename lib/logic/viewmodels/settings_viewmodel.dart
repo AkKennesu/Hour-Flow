@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 class SettingsViewModel extends ChangeNotifier {
   String _selectedLanguage = 'English';
-  bool _isDarkMode = true;
+  ThemeMode _themeMode = ThemeMode.system;
   bool _pushNotifications = true;
   bool _shiftReminders = false;
 
   String get selectedLanguage => _selectedLanguage;
-  bool get isDarkMode => _isDarkMode;
+  ThemeMode get themeMode => _themeMode;
   bool get pushNotifications => _pushNotifications;
   bool get shiftReminders => _shiftReminders;
 
@@ -24,8 +24,8 @@ class SettingsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleDarkMode(bool val) {
-    _isDarkMode = val;
+  void setThemeMode(ThemeMode mode) {
+    _themeMode = mode;
     notifyListeners();
   }
 

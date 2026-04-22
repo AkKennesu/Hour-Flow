@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'glass_card.dart';
 
 class HorizontalDatePicker extends StatelessWidget {
   final DateTime selectedDate;
@@ -28,7 +27,7 @@ class HorizontalDatePicker extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: 7,
-        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final date = weekDates[index];
           final bool isSelected = date.year == selectedDate.year &&
@@ -63,32 +62,20 @@ class _DateTile extends StatelessWidget {
     final String dayName = DateFormat('EEE').format(date);
     final String dayNumber = DateFormat('d').format(date);
 
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.fastOutSlowIn,
+        duration: const Duration(milliseconds: 250),
         width: 60,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           color: isSelected 
               ? theme.colorScheme.primary 
-              : Colors.white.withValues(alpha: 0.05),
-          border: Border.all(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : Colors.white.withValues(alpha: 0.1),
-            width: 1.5,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.4),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  )
-                ]
-              : [],
+              : theme.colorScheme.surfaceContainerHigh,
+          border: isSelected 
+              ? null 
+              : Border.all(color: theme.colorScheme.outlineVariant, width: 1),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -96,16 +83,17 @@ class _DateTile extends StatelessWidget {
             Text(
               dayName.toUpperCase(),
               style: theme.textTheme.labelSmall?.copyWith(
-                color: isSelected ? Colors.white : Colors.white54,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                fontSize: 10,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               dayNumber,
               style: theme.textTheme.titleMedium?.copyWith(
-                color: isSelected ? Colors.white : Colors.white,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],

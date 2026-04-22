@@ -3,9 +3,8 @@ import '../models/time_log.dart';
 import '../models/calendar_event.dart';
 
 class DatabaseService {
-  static const String logBoxName = 'timelogs';
-  static const String eventBoxName = 'calendarEvents';
-  late Box<TimeLog> _logBox;
+  Box<TimeLog>? _logBox;
+  Box<CalendarEvent>? _eventBox;
 
   Future<void> init() async {
     await Hive.initFlutter();
@@ -15,27 +14,47 @@ class DatabaseService {
     if (!Hive.isAdapterRegistered(1)) {
       Hive.registerAdapter(CalendarEventAdapter());
     }
-
-    _logBox = await Hive.openBox<TimeLog>(logBoxName);
-    await Hive.openBox<CalendarEvent>(eventBoxName);
   }
 
-  Box<TimeLog> get logBox => _logBox;
-  Box<CalendarEvent> get eventBox => Hive.box<CalendarEvent>(eventBoxName);
+  /// Opens user-specific boxes. This should be called whenever the user ID changes.
+  Future<void> openUserBoxes(String userId) async {
+    // Close existing boxes if any
+    await closeUserBoxes();
+    
+    _logBox = await Hive.openBox<TimeLog>('timelogs_$userId');
+    _eventBox = await Hive.openBox<CalendarEvent>('calendarEvents_$userId');
+  }
+
+  Future<void> closeUserBoxes() async {
+    await _logBox?.close();
+    await _eventBox?.close();
+    _logBox = null;
+    _eventBox = null;
+  }
+
+  Box<TimeLog> get logBox {
+    if (_logBox == null) throw Exception("Database not initialized for user. Call openUserBoxes first.");
+    return _logBox!;
+  }
+
+  Box<CalendarEvent> get eventBox {
+    if (_eventBox == null) throw Exception("Database not initialized for user. Call openUserBoxes first.");
+    return _eventBox!;
+  }
 
   Future<void> saveLog(TimeLog log) async {
-    await _logBox.put(log.id, log);
+    await logBox.put(log.id, log);
   }
 
   Future<void> deleteLog(String id) async {
-    await _logBox.delete(id);
+    await logBox.delete(id);
   }
 
   List<TimeLog> getAllLogs() {
-    return _logBox.values.toList();
+    return logBox.values.toList();
   }
 
   TimeLog? getLog(String id) {
-    return _logBox.get(id);
+    return logBox.get(id);
   }
 }

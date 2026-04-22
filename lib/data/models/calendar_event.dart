@@ -22,6 +22,9 @@ class CalendarEvent extends HiveObject {
   @HiveField(5)
   final bool hasNotifiedToday;
 
+  @HiveField(6)
+  final bool isSynchronized;
+
   CalendarEvent({
     required this.id,
     required this.date,
@@ -29,6 +32,7 @@ class CalendarEvent extends HiveObject {
     this.description = '',
     this.hasNotifiedNear = false,
     this.hasNotifiedToday = false,
+    this.isSynchronized = false,
   });
 
   CalendarEvent copyWith({
@@ -36,6 +40,7 @@ class CalendarEvent extends HiveObject {
     String? description,
     bool? hasNotifiedNear,
     bool? hasNotifiedToday,
+    bool? isSynchronized,
   }) {
     return CalendarEvent(
       id: id,
@@ -44,6 +49,30 @@ class CalendarEvent extends HiveObject {
       description: description ?? this.description,
       hasNotifiedNear: hasNotifiedNear ?? this.hasNotifiedNear,
       hasNotifiedToday: hasNotifiedToday ?? this.hasNotifiedToday,
+      isSynchronized: isSynchronized ?? this.isSynchronized,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'date': date,
+      'title': title,
+      'description': description,
+      'hasNotifiedNear': hasNotifiedNear,
+      'hasNotifiedToday': hasNotifiedToday,
+    };
+  }
+
+  factory CalendarEvent.fromMap(String id, Map<String, dynamic> map) {
+    return CalendarEvent(
+      id: id,
+      date: (map['date'] as dynamic).toDate(),
+      title: map['title'],
+      description: map['description'] ?? '',
+      hasNotifiedNear: map['hasNotifiedNear'] ?? false,
+      hasNotifiedToday: map['hasNotifiedToday'] ?? false,
+      isSynchronized: true,
     );
   }
 }
